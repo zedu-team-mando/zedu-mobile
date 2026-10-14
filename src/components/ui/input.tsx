@@ -130,8 +130,14 @@ export const AppInput: React.FC<AppInputProps> = ({
           <TouchableOpacity
             onPress={() => setIsPasswordVisible(!isPasswordVisible)}
             disabled={disabled}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isPasswordVisible ? 'Hide password' : 'Show password'
+            }
+            accessibilityState={{ disabled }}
           >
             <Icon
+              accessible={false}
               name={isPasswordVisible ? 'eye-off' : 'eye'}
               size={22}
               color={colors.textSecondary}
