@@ -5,21 +5,38 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { AppInput } from './input';
 
 jest.mock('./text', () => ({ AppText: 'AppText' }));
-jest.mock('@/utils/normalize', () => ({ normalize: (value: number) => value }));
-jest.mock('@/theme/ThemeProvider', () => ({ useTheme: () => ({ colors: {} }) }));
+jest.mock('../../utils/normalize', () => ({ normalize: (value: number) => value }));
+jest.mock('../../theme/ThemeProvider', () => ({ useTheme: () => ({ colors: {} }) }));
 jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => 'Icon');
 
 describe('AppInput password visibility accessibility', () => {
   let tree: Renderer.ReactTestRenderer | undefined;
-  const environment = globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean };
+  const environment = globalThis as typeof globalThis & {
+    IS_REACT_ACT_ENVIRONMENT?: boolean;
+  };
   const previousActEnvironment = environment.IS_REACT_ACT_ENVIRONMENT;
 
-  beforeAll(() => { environment.IS_REACT_ACT_ENVIRONMENT = true; });
-  afterAll(() => { environment.IS_REACT_ACT_ENVIRONMENT = previousActEnvironment; });
+  beforeAll(() => {
+    environment.IS_REACT_ACT_ENVIRONMENT = true;
+  });
 
-  const renderInput = async (props = {}) => {
+  afterAll(() => {
+    environment.IS_REACT_ACT_ENVIRONMENT = previousActEnvironment;
+  });
+
+  const renderInput = async (
+    props: { disabled?: boolean; secureTextEntry?: boolean } = {},
+  ) => {
     await act(async () => {
-      tree = Renderer.create(<AppInput placeholder="Password" value="DemoPassword123!" onChangeText={jest.fn()} secureTextEntry {...props} />);
+      tree = Renderer.create(
+        <AppInput
+          placeholder="Password"
+          value="DemoPassword123!"
+          onChangeText={jest.fn()}
+          secureTextEntry
+          {...props}
+        />,
+      );
     });
   };
 
@@ -43,10 +60,12 @@ describe('AppInput password visibility accessibility', () => {
     await renderInput();
     const toggle = () => tree!.root.findByType(TouchableOpacity);
     const input = () => tree!.root.findByType(TextInput);
+
     await act(async () => toggle().props.onPress());
     expect(toggle().props.accessibilityLabel).toBe('Hide password');
     expect(input().props.secureTextEntry).toBe(false);
     expect(input().props.value).toBe('DemoPassword123!');
+
     await act(async () => toggle().props.onPress());
     expect(toggle().props.accessibilityLabel).toBe('Show password');
     expect(input().props.secureTextEntry).toBe(true);
