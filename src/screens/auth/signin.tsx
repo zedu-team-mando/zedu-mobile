@@ -73,39 +73,40 @@ const SigninScreen: React.FC = () => {
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
+    try {
+      const googleData = await signInWithGoogle();
+      const token = googleData?.idToken;
 
-    const googleData = await signInWithGoogle();
-    const token = googleData?.idToken;
+      if (token) {
+        const { data, error } = await PostRequest('/auth/google', {
+          grant_code: token,
+        });
 
-    if (token) {
-      const { data, error } = await PostRequest('/auth/google', {
-        grant_code: token,
-      });
+        if (error) {
+          return;
+        }
 
-      if (error) {
-        setGoogleLoading(false);
-        return;
+        await storeMultipleData([
+          ['user', data.data.user],
+          ['token', data.data.access_token],
+          ['current_org', data.data.user.current_org],
+          ['organisation', data.data.user.organisation],
+        ]);
+
+        dispatch({ type: ACTIONS.USER, payload: data.data.user });
+        dispatch({ type: ACTIONS.TOKEN, payload: data.data.access_token });
+        dispatch({
+          type: ACTIONS.ORG_ID,
+          payload: data.data.user.current_org,
+        });
+        dispatch({
+          type: ACTIONS.ORG_DATA,
+          payload: data.data.user.organisation,
+        });
       }
-
-      await storeMultipleData([
-        ['user', data.data.user],
-        ['token', data.data.access_token],
-        ['current_org', data.data.user.current_org],
-        ['organisation', data.data.user.organisation],
-      ]);
-
-      dispatch({ type: ACTIONS.USER, payload: data.data.user });
-      dispatch({ type: ACTIONS.TOKEN, payload: data.data.access_token });
-      dispatch({ type: ACTIONS.ORG_ID, payload: data.data.user.current_org });
-      dispatch({
-        type: ACTIONS.ORG_DATA,
-        payload: data.data.user.organisation,
-      });
-
+    } finally {
       setGoogleLoading(false);
     }
-
-    setGoogleLoading(false);
   };
 
   const handleLogin = async () => {
@@ -138,6 +139,8 @@ const SigninScreen: React.FC = () => {
     setButtonLoading(false);
   };
 
+  const isAnyAuthPending = buttonLoading || googleLoading || appleLoading;
+
   return (
     <Container>
       <KeyboardAwareScrollView
@@ -164,7 +167,7 @@ const SigninScreen: React.FC = () => {
           style={styles.socialBtn}
           activeOpacity={0.8}
           onPress={handleGoogleLogin}
-          disabled={googleLoading}
+          disabled={isAnyAuthPending}
         >
           <Image
             source={require('@/assets/google-icon.png')}
@@ -180,7 +183,7 @@ const SigninScreen: React.FC = () => {
             style={styles.socialBtn}
             activeOpacity={0.8}
             onPress={handleAppleLogin}
-            disabled={appleLoading}
+            disabled={isAnyAuthPending}
           >
             <Image
               source={require('@/assets/icons/apple.png')}
@@ -228,7 +231,7 @@ const SigninScreen: React.FC = () => {
           onPress={handleLogin}
           style={styles.submitBtn}
           loading={buttonLoading}
-          disabled={!email || !password || googleLoading}
+          disabled={!email || !password || isAnyAuthPending}
         />
 
         <View style={styles.footer}>
