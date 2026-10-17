@@ -42,16 +42,38 @@ type MediaGalleryScreenProps = {
   navigation: MediaGalleryScreenNavigationProp;
 };
 
+type EmptyStateContent = {
+  icon: string;
+  title: string;
+  description: string;
+};
+
 type MediaTabProps = {
   media: PreviewMediaItem[];
   onImagePress: (img: PreviewMediaItem) => void;
   loading?: boolean;
   loadingMore?: boolean;
   onLoadMore?: () => void;
-  emptyText?: string;
+  emptyState: EmptyStateContent;
   styles: ReturnType<typeof createChatMediaStyles>;
   colors: ReturnType<typeof useTheme>['colors'];
 };
+
+const EmptyState: React.FC<{
+  content: EmptyStateContent;
+  styles: ReturnType<typeof createChatMediaStyles>;
+  colors: ReturnType<typeof useTheme>['colors'];
+}> = ({ content, styles, colors }) => (
+  <View style={styles.emptyState}>
+    <Ionicons name={content.icon} size={48} color={colors.iconMuted} />
+    <AppText variant="bold" size={16} style={styles.emptyTitle}>
+      {content.title}
+    </AppText>
+    <AppText size={13} style={styles.emptyDescription}>
+      {content.description}
+    </AppText>
+  </View>
+);
 
 const AUDIO_EXTENSIONS = ['wav', 'm4a', 'mp3', 'ogg', 'aac', 'flac'];
 
@@ -195,7 +217,7 @@ const MediaTab: React.FC<MediaTabProps> = ({
   loading,
   loadingMore,
   onLoadMore,
-  emptyText = 'No files found',
+  emptyState,
   styles,
   colors,
 }) => {
@@ -217,12 +239,12 @@ const MediaTab: React.FC<MediaTabProps> = ({
     );
   }
 
+  if (media.length === 0) {
+    return <EmptyState content={emptyState} styles={styles} colors={colors} />;
+  }
+
   return (
     <>
-      {!loading && media.length === 0 && (
-        <AppText style={styles.emptyText}>{emptyText}</AppText>
-      )}
-
       <ScrollView
         contentContainerStyle={styles.mediaGrid}
         onScroll={handleScroll}
@@ -292,7 +314,7 @@ type ListTabProps = {
   loading?: boolean;
   loadingMore?: boolean;
   onLoadMore?: () => void;
-  emptyText: string;
+  emptyState: EmptyStateContent;
   renderRow: (item: PreviewMediaItem) => React.ReactNode;
   styles: ReturnType<typeof createChatMediaStyles>;
   colors: ReturnType<typeof useTheme>['colors'];
@@ -303,7 +325,7 @@ const ListTab: React.FC<ListTabProps> = ({
   loading,
   loadingMore,
   onLoadMore,
-  emptyText,
+  emptyState,
   renderRow,
   styles,
   colors,
@@ -326,15 +348,16 @@ const ListTab: React.FC<ListTabProps> = ({
     );
   }
 
+  if (items.length === 0) {
+    return <EmptyState content={emptyState} styles={styles} colors={colors} />;
+  }
+
   return (
     <ScrollView
       contentContainerStyle={styles.linksList}
       onScroll={handleScroll}
       scrollEventThrottle={16}
     >
-      {items.length === 0 && (
-        <AppText style={styles.emptyText}>{emptyText}</AppText>
-      )}
       {items.map(item => renderRow(item))}
       {loadingMore && (
         <ActivityIndicator color={colors.primary} style={styles.footerLoader} />
@@ -360,6 +383,38 @@ const FILE_CATEGORY_PARAM: Record<
   videos: 'videos',
   audio: 'audio',
   documents: 'documents',
+};
+
+const EMPTY_STATES: Record<
+  (typeof TAB_LIST)[number]['key'],
+  EmptyStateContent
+> = {
+  all: {
+    icon: 'folder-open-outline',
+    title: 'Nothing shared yet',
+    description:
+      'Photos, videos, audio and documents shared in this conversation will show up here.',
+  },
+  images: {
+    icon: 'images-outline',
+    title: 'No images yet',
+    description: 'Images shared in this conversation will show up here.',
+  },
+  videos: {
+    icon: 'videocam-outline',
+    title: 'No videos yet',
+    description: 'Videos shared in this conversation will show up here.',
+  },
+  audio: {
+    icon: 'musical-notes-outline',
+    title: 'No audio yet',
+    description: 'Audio files shared in this conversation will show up here.',
+  },
+  documents: {
+    icon: 'document-text-outline',
+    title: 'No documents yet',
+    description: 'Documents shared in this conversation will show up here.',
+  },
 };
 
 const MediaGalleryScreen: React.FC<MediaGalleryScreenProps> = ({
@@ -520,7 +575,7 @@ const MediaGalleryScreen: React.FC<MediaGalleryScreenProps> = ({
                 loading={channelLoading}
                 loadingMore={tabLoadingMore}
                 onLoadMore={tabLoadMore}
-                emptyText={`No ${activeTab} files found`}
+                emptyState={EMPTY_STATES[activeTab]}
                 styles={styles}
                 colors={colors}
               />
@@ -531,7 +586,7 @@ const MediaGalleryScreen: React.FC<MediaGalleryScreenProps> = ({
                 loading={channelLoading}
                 loadingMore={tabLoadingMore}
                 onLoadMore={tabLoadMore}
-                emptyText="No documents found"
+                emptyState={EMPTY_STATES.documents}
                 styles={styles}
                 colors={colors}
                 renderRow={item => (

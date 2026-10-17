@@ -1493,6 +1493,24 @@ export function createChatMediaStyles(colors: ThemeColors) {
       marginTop: 40,
       fontSize: 15,
     },
+    emptyState: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 32,
+      paddingBottom: 40,
+    },
+    emptyTitle: {
+      color: colors.textPrimary,
+      textAlign: 'center',
+      marginTop: 16,
+    },
+    emptyDescription: {
+      color: colors.messageMeta,
+      textAlign: 'center',
+      marginTop: 6,
+      lineHeight: 20,
+    },
     footerLoader: {
       width: '100%',
       paddingVertical: 16,
