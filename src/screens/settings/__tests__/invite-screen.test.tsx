@@ -43,7 +43,6 @@ jest.mock('../../../theme/ThemeProvider', () => {
 });
 
 jest.mock('../../../components/layout/container', () => {
-  const React = require('react');
   const { View } = require('react-native');
   return {
     __esModule: true,
@@ -68,20 +67,41 @@ const roles = [
 
 // The label text sits inside AppText > View > ... > TouchableOpacity, so the
 // match's direct parent is never the touchable. Walk up to the first ancestor
-// that exposes an onPress handler.
+// that exposes an onPress handler, or trigger role selection via the role dropdown.
 const findTouchable = (
   root: ReactTestRenderer.ReactTestInstance,
   label: string,
 ) => {
-  let node: any = root.findAllByProps({ children: label })[0];
+  const role = roles.find(r => r.name === label);
+  if (role) {
+    try {
+      const dropdown = root.findByProps({ testID: 'role-dropdown' });
+      if (dropdown) {
+        return {
+          props: {
+            onPress: () =>
+              dropdown.props.onChange({ label: role.name, value: role.id }),
+          },
+        } as any;
+      }
+    } catch {}
+  }
+  const nodes = root.findAllByProps({ children: label });
+  let node: any = nodes[0];
   while (node && typeof node.props?.onPress !== 'function') {
     node = node.parent;
   }
   return node as ReactTestRenderer.ReactTestInstance;
 };
 
-const findShareButton = (root: ReactTestRenderer.ReactTestInstance) =>
-  findTouchable(root, 'Share link via...') as any;
+const findShareButton = (root: ReactTestRenderer.ReactTestInstance) => {
+  try {
+    return root.findByProps({ testID: 'share-invite-button' });
+  } catch {
+    return (findTouchable(root, 'Share link via...') ||
+      findTouchable(root, 'Share link (generate a link first)')) as any;
+  }
+};
 
 const flushPromises = () => new Promise(setImmediate);
 
@@ -458,4 +478,52 @@ test('an outdated response completing after the current one cannot overwrite the
   expect(mockedShare).toHaveBeenCalledTimes(1);
   expect(mockedShare.mock.calls[0][0].message).toContain('invite/current');
   expect(mockedShare.mock.calls[0][0].message).not.toContain('invite/stale');
+});
+
+test('renders role dropdown with all offered roles and corrected copy', async () => {
+  const renderer = await renderScreen();
+
+  // Dropdown presents all available roles
+  const dropdown = renderer.root.findByProps({ testID: 'role-dropdown' });
+  expect(dropdown).toBeDefined();
+  expect(dropdown.props.data).toEqual([
+    { label: 'User', value: 'role-user' },
+    { label: 'Admin', value: 'role-admin' },
+  ]);
+
+  // Corrected copy in invite link section
+  const copyNodes = renderer.root.findAllByProps({
+    children: 'Anyone with this link joins as the role selected above.',
+  });
+  expect(copyNodes.length).toBeGreaterThan(0);
+
+  // Disabled share button text is "Share link (generate a link first)"
+  const shareBtn = findShareButton(renderer.root);
+  expect(shareBtn.props.disabled).toBe(true);
+  const disabledLabelNodes = renderer.root.findAllByProps({
+    children: 'Share link (generate a link first)',
+  });
+  expect(disabledLabelNodes.length).toBeGreaterThan(0);
+});
+
+test('updates share button copy when link is generated', async () => {
+  mockedPostRequest.mockResolvedValue({
+    data: { data: { invitation_link: 'invite/gen-link' } },
+    error: null,
+  });
+
+  const renderer = await renderScreen();
+  const generateButton = findTouchable(renderer.root, 'Generate') as any;
+
+  await act(async () => {
+    await generateButton.props.onPress();
+    await flushPromises();
+  });
+
+  const shareBtn = findShareButton(renderer.root);
+  expect(shareBtn.props.disabled).toBe(false);
+  const activeLabelNodes = renderer.root.findAllByProps({
+    children: 'Share link via...',
+  });
+  expect(activeLabelNodes.length).toBeGreaterThan(0);
 });

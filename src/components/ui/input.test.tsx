@@ -5,8 +5,12 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { AppInput } from './input';
 
 jest.mock('./text', () => ({ AppText: 'AppText' }));
-jest.mock('../../utils/normalize', () => ({ normalize: (value: number) => value }));
-jest.mock('../../theme/ThemeProvider', () => ({ useTheme: () => ({ colors: {} }) }));
+jest.mock('../../utils/normalize', () => ({
+  normalize: (value: number) => value,
+}));
+jest.mock('../../theme/ThemeProvider', () => ({
+  useTheme: () => ({ colors: {} }),
+}));
 jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => 'Icon');
 
 describe('AppInput password visibility accessibility', () => {
