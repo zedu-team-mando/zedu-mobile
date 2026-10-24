@@ -5,6 +5,7 @@ import axios, {
 } from 'axios';
 import { BASE_URL } from '@env';
 import { clearAllData, retrieveToken } from './helper';
+import { notifySessionExpired } from './session-expiry';
 
 const apiClient = axios.create({
   baseURL: `${BASE_URL}`,
@@ -35,8 +36,17 @@ export const request = async <T = any>(
       error.response?.status === 401 ||
       error.response?.data?.status_code === 401
     ) {
+      const requestWasAuthenticated = Boolean(
+        error.config?.headers?.Authorization || config.headers?.Authorization,
+      );
+
       await clearAllData();
-      // Logic for logout or redirect goes here
+
+      // A failed sign-in also returns 401, but it has no bearer token to
+      // invalidate. Only authenticated requests should force a sign-out.
+      if (requestWasAuthenticated) {
+        notifySessionExpired();
+      }
     }
 
     return { data: null, error: message };
