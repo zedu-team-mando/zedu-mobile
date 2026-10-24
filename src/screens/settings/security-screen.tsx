@@ -162,10 +162,25 @@ const SecurityScreen = ({ navigation }: any) => {
     });
   };
 
+  const getDeviceLabel = (device?: string) => {
+    if (
+      !device ||
+      device.trim() === '' ||
+      device.trim().toLowerCase() === 'unknown'
+    ) {
+      return 'Unknown device';
+    }
+    return device;
+  };
+
   return (
     <Container>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          testID="security-back-button"
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+        >
           <Ionicons name="chevron-back" size={28} color={colors.iconDefault} />
         </TouchableOpacity>
         <AppText variant="bold" style={styles.headerTitle}>
@@ -189,9 +204,16 @@ const SecurityScreen = ({ navigation }: any) => {
             />
           }
         >
-          <AppText variant="bold" style={styles.sectionTitle}>
-            Active Sessions
-          </AppText>
+          <View style={styles.introContainer}>
+            <AppText variant="bold" style={styles.introTitle}>
+              Where you are logged in
+            </AppText>
+            <AppText style={styles.introSubtitle}>
+              Review the devices and browsers that have logged in to your
+              account. If you do not recognize one, end that session and change
+              your password.
+            </AppText>
+          </View>
 
           {sessions.length === 0 ? (
             <View style={styles.emptyState}>
@@ -213,45 +235,56 @@ const SecurityScreen = ({ navigation }: any) => {
                       <MaterialCommunityIcons
                         name={getDeviceIcon(session.device) as any}
                         size={22}
-                        color={colors.primary}
+                        color={colors.textSecondary}
                       />
                     </View>
                     <View style={styles.sessionMeta}>
                       <AppText variant="bold" style={styles.deviceName}>
-                        {session.device}
+                        {getDeviceLabel(session.device)}
                       </AppText>
                       <AppText style={styles.locationText}>
-                        {session.location} • {session.ip_address}
-                      </AppText>
-                    </View>
-                    <View
-                      style={[
-                        styles.statusBadge,
-                        session.is_live
-                          ? styles.activeBadge
-                          : styles.inactiveBadge,
-                      ]}
-                    >
-                      <AppText
-                        style={[
-                          styles.statusText,
-                          session.is_live
-                            ? styles.activeText
-                            : styles.inactiveText,
-                        ]}
-                      >
-                        {session.is_live ? 'Active' : 'Expired'}
+                        {`${session.location || 'Unknown location'} · ${
+                          session.ip_address || 'Unknown IP'
+                        }`}
                       </AppText>
                     </View>
                   </View>
 
-                  <View style={styles.dividerInset} />
+                  <View style={styles.cardDivider} />
 
                   <View style={styles.sessionDetails}>
                     <View style={styles.detailItem}>
-                      <AppText style={styles.detailLabel}>Logged In</AppText>
+                      <AppText style={styles.detailLabel}>LOGGED IN</AppText>
                       <AppText style={styles.detailValue}>
                         {formatDate(session.login_at)}
+                      </AppText>
+                    </View>
+                    <View
+                      testID={`status-pill-${session.id}`}
+                      style={[
+                        styles.statusPill,
+                        session.is_live
+                          ? styles.activeStatusPill
+                          : styles.inactiveStatusPill,
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.statusDot,
+                          session.is_live
+                            ? styles.activeStatusDot
+                            : styles.inactiveStatusDot,
+                        ]}
+                      />
+                      <AppText
+                        style={[
+                          styles.statusPillText,
+                          session.is_live
+                            ? styles.activeStatusText
+                            : styles.inactiveStatusText,
+                        ]}
+                      >
+                        {session.is_live ? 'Active' : 'Inactive'}
                       </AppText>
                     </View>
                   </View>

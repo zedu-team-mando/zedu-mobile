@@ -704,6 +704,25 @@ export function createSecurityScreenStyles(colors: ThemeColors) {
       borderBottomColor: colors.border,
       backgroundColor: colors.background,
     },
+    backBtn: {
+      width: 44,
+      height: 44,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    introContainer: {
+      marginBottom: 20,
+    },
+    introTitle: {
+      fontSize: 18,
+      color: colors.textPrimary,
+      marginBottom: 6,
+    },
+    introSubtitle: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      lineHeight: 18,
+    },
     sessionCard: {
       backgroundColor: colors.surface,
       borderRadius: 14,
@@ -717,12 +736,17 @@ export function createSecurityScreenStyles(colors: ThemeColors) {
       shadowRadius: 10,
       elevation: 2,
     },
+    cardDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.border,
+      marginVertical: 12,
+    },
     scrollContent: { padding: 20 },
     sessionHeader: { flexDirection: 'row', alignItems: 'center' },
     iconContainer: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: 44,
+      height: 44,
+      borderRadius: 12,
       backgroundColor: colors.surfaceElevated,
       justifyContent: 'center',
       alignItems: 'center',
@@ -730,6 +754,41 @@ export function createSecurityScreenStyles(colors: ThemeColors) {
     sessionMeta: { flex: 1, marginLeft: 12 },
     deviceName: { fontSize: 15, color: colors.textPrimary },
     locationText: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+    statusPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 16,
+      gap: 6,
+    },
+    activeStatusPill: {
+      backgroundColor: '#ECFDF5',
+    },
+    inactiveStatusPill: {
+      backgroundColor: colors.categoryChip,
+    },
+    statusDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+    },
+    activeStatusDot: {
+      backgroundColor: '#10B981',
+    },
+    inactiveStatusDot: {
+      backgroundColor: colors.textSecondary,
+    },
+    statusPillText: {
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    activeStatusText: {
+      color: '#059669',
+    },
+    inactiveStatusText: {
+      color: colors.textSecondary,
+    },
     statusBadge: {
       paddingHorizontal: 8,
       paddingVertical: 4,
