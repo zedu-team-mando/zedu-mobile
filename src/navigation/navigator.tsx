@@ -47,6 +47,7 @@ import { AgentStackParamList } from './stacks/agents';
 import { SettingStack, SettingStackParamList } from './stacks/settings';
 import { NavigatorScreenParams } from '@react-navigation/native';
 import { retrieveMultipleData } from '@/utils/helper';
+import { onSessionExpired } from '@/utils/session-expiry';
 import { useDataContext } from '@/store/useDataContext';
 import { ACTIONS } from '@/store/types';
 import { Platform, AppState, AppStateStatus } from 'react-native';
@@ -151,6 +152,29 @@ export const AppNavigator = ({ currentRoute }: AppNavigatorProps) => {
   const buzzIsMutedRef = useRef(state?.buzzIsMuted);
   const buzzShowVideoRef = useRef(state?.buzzShowVideo);
   const hasJoinedRef = useRef(state?.hasJoined);
+  const sessionExpiryHandledRef = useRef(false);
+
+  useEffect(() => {
+    if (state?.token) {
+      sessionExpiryHandledRef.current = false;
+    }
+  }, [state?.token]);
+
+  useEffect(() => {
+    return onSessionExpired(() => {
+      if (sessionExpiryHandledRef.current) return;
+      sessionExpiryHandledRef.current = true;
+
+      dispatch({ type: ACTIONS.TOKEN, payload: null });
+      dispatch({ type: ACTIONS.USER, payload: null });
+      dispatch({ type: ACTIONS.ORG_ID, payload: null });
+      dispatch({ type: ACTIONS.ORG_DATA, payload: null });
+      dispatch({ type: ACTIONS.USER_CHANNELS, payload: [] });
+      dispatch({ type: ACTIONS.DMS, payload: [] });
+      dispatch({ type: ACTIONS.DMS_CHAT, payload: { data: [], page: 1 } });
+      ShowNotify('Session expired', 'Please sign in again.');
+    });
+  }, [dispatch]);
 
   useEffect(() => {
     isInitializedRef.current = !initializing;
