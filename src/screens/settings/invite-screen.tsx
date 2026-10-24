@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { AppText } from '@/components/ui/text';
+import { Dropdown } from 'react-native-element-dropdown';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import Container from '@/components/layout/container';
@@ -35,6 +36,7 @@ const InvitePeopleScreen = ({ navigation }: any) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [roles, setRoles] = useState<any[]>([]);
   const [roleId, setRoleId] = useState<string>('');
+  const [isRoleFocused, setIsRoleFocused] = useState(false);
   const [generatedLink, setGeneratedLink] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const generateRequestId = useRef(0);
@@ -205,7 +207,9 @@ const InvitePeopleScreen = ({ navigation }: any) => {
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
         >
-          <AppText style={styles.label}>To:</AppText>
+          <AppText variant="bold" style={styles.label}>
+            To
+          </AppText>
 
           <View style={styles.inputContainer}>
             <View style={styles.chipWrapper}>
@@ -223,7 +227,8 @@ const InvitePeopleScreen = ({ navigation }: any) => {
               ))}
               <TextInput
                 style={styles.input}
-                placeholder={emails.length === 0 ? 'name@email.com' : ''}
+                placeholder={emails.length === 0 ? 'name@example.com' : ''}
+                placeholderTextColor={colors.textSecondary}
                 value={emailInput}
                 onChangeText={handleAddEmail}
                 onBlur={() => emailInput && validateAndAdd(emailInput)}
@@ -241,36 +246,68 @@ const InvitePeopleScreen = ({ navigation }: any) => {
 
           <View style={styles.roleSection}>
             <AppText variant="bold" style={styles.label}>
-              Assign Role:
+              Role
             </AppText>
             {loading ? (
               <ActivityIndicator />
             ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.rolesList}
-              >
-                {roles.map(role => (
-                  <TouchableOpacity
-                    key={role.id}
-                    onPress={() => handleSelectRole(role.id)}
-                    style={[
-                      styles.roleChip,
-                      roleId === role.id && styles.roleChipActive,
-                    ]}
-                  >
-                    <AppText
+              <Dropdown
+                testID="role-dropdown"
+                style={[
+                  styles.roleDropdown,
+                  isRoleFocused && { borderColor: colors.primary },
+                ]}
+                containerStyle={styles.roleDropdownMenu}
+                placeholderStyle={styles.rolePlaceholder}
+                selectedTextStyle={styles.roleSelectedText}
+                data={roles.map(role => ({
+                  label: role.name,
+                  value: role.id,
+                }))}
+                labelField="label"
+                valueField="value"
+                value={roleId}
+                placeholder="Select a role..."
+                onFocus={() => setIsRoleFocused(true)}
+                onBlur={() => setIsRoleFocused(false)}
+                onChange={item => handleSelectRole(item.value)}
+                renderItem={(item: any) => {
+                  const isSelected = item.value === roleId;
+                  return (
+                    <View
+                      testID={`role-option-${item.value}`}
                       style={[
-                        styles.roleText,
-                        roleId === role.id && styles.roleTextActive,
+                        styles.roleDropdownItem,
+                        isSelected && styles.roleDropdownItemSelected,
                       ]}
                     >
-                      {role.name}
-                    </AppText>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+                      <AppText
+                        variant={isSelected ? 'bold' : 'regular'}
+                        style={[
+                          styles.roleDropdownItemText,
+                          isSelected && styles.roleDropdownItemTextSelected,
+                        ]}
+                      >
+                        {item.label}
+                      </AppText>
+                      {isSelected && (
+                        <Feather
+                          name="check"
+                          size={18}
+                          color={colors.primary}
+                        />
+                      )}
+                    </View>
+                  );
+                }}
+                renderRightIcon={() => (
+                  <Ionicons
+                    name={isRoleFocused ? 'chevron-up' : 'chevron-down'}
+                    size={20}
+                    color={colors.iconDefault}
+                  />
+                )}
+              />
             )}
           </View>
 
@@ -282,8 +319,7 @@ const InvitePeopleScreen = ({ navigation }: any) => {
                 Invite with link
               </AppText>
               <AppText style={styles.sectionSub}>
-                Anyone with this link can join your workspace as the selected
-                assigned role above.
+                Anyone with this link joins as the role selected above.
               </AppText>
             </View>
 
@@ -291,7 +327,7 @@ const InvitePeopleScreen = ({ navigation }: any) => {
               <View style={styles.linkContent}>
                 <Feather name="link" size={18} color={colors.textSecondary} />
                 <AppText numberOfLines={1} style={styles.linkText}>
-                  {generatedLink || `Create invite link`}
+                  {generatedLink || `Link appears here`}
                 </AppText>
               </View>
               <TouchableOpacity
@@ -300,7 +336,7 @@ const InvitePeopleScreen = ({ navigation }: any) => {
                 disabled={isGenerating}
               >
                 {isGenerating ? (
-                  <ActivityIndicator size="small" color={colors.primary} />
+                  <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
                   <AppText variant="bold" style={styles.copyBtnText}>
                     {generatedLink ? 'Copy' : 'Generate'}
@@ -310,15 +346,29 @@ const InvitePeopleScreen = ({ navigation }: any) => {
             </View>
 
             <TouchableOpacity
-              style={[styles.shareOption, isShareDisabled && { opacity: 0.5 }]}
+              testID="share-invite-button"
+              style={[
+                styles.shareOption,
+                isShareDisabled && styles.shareOptionDisabled,
+              ]}
               onPress={handleShare}
               disabled={isShareDisabled}
             >
-              <View style={styles.shareIconCircle}>
-                <Feather name="share-2" size={20} color={colors.primary} />
-              </View>
-              <AppText variant="bold" style={styles.shareText}>
-                Share link via...
+              <Feather
+                name="share-2"
+                size={18}
+                color={isShareDisabled ? colors.textSecondary : colors.primary}
+              />
+              <AppText
+                variant="bold"
+                style={[
+                  styles.shareText,
+                  isShareDisabled && styles.shareTextDisabled,
+                ]}
+              >
+                {generatedLink
+                  ? 'Share link via...'
+                  : 'Share link (generate a link first)'}
               </AppText>
             </TouchableOpacity>
           </View>
